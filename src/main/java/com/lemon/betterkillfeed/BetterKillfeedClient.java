@@ -2,11 +2,20 @@ package com.lemon.betterkillfeed;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableTextContent;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.Arrays;
+import java.util.Objects;
 
 public class BetterKillfeedClient implements ClientModInitializer {
 
@@ -39,6 +48,21 @@ public class BetterKillfeedClient implements ClientModInitializer {
         LOGGER.info("initializing " + MOD_ID);
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onServerTick);
+
+        ServerMessageEvents.GAME_MESSAGE.register((server, message, sender) -> {
+            if (message.getContent() instanceof TranslatableTextContent translatable
+                    && translatable.getKey().startsWith("death.")) {
+
+                LOGGER.info("CAUGHT DEATH MSG KEY: {}, NORMAL: {}", translatable.getKey(), message.getContent());
+
+                Text newKillMessage = KillMessageFormatter.formatKillMessage(message, EVENT_PARSER);
+
+                MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(newKillMessage);
+            }
+        });
+
+
+
     }
 
     /// Processes which should run continuously

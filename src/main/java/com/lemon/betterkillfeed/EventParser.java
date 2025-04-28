@@ -37,6 +37,16 @@ public class EventParser {
          }
     }
 
+    public CombatSession getCombatSession(UUID victim) {
+        if (combatSessions.containsKey(victim)) {
+            return combatSessions.get(victim);
+        }
+        else {
+            // Returns a combat session with a kill event using a 0 uuid.
+            return new CombatSession(new KillEvent(new UUID(0, 0), Util.getMeasuringTimeMs()));
+        }
+    }
+
     public void endCombatSession(UUID uuid) {
         BetterKillfeedClient.LOGGER.info("Ending combat session for player: {}", uuid);
 
