@@ -31,7 +31,7 @@ public class EventParser {
 
     public void checkForExpiredSessions(long expireThreshold) {
          for (Map.Entry<UUID, CombatSession> entry : combatSessions.entrySet()) {
-             if (Util.getMeasuringTimeMs() - entry.getValue().lastCombatTime >= expireThreshold) {
+             if (Util.getMeasuringTimeMs() - entry.getValue().lastCombatTime >= expireThreshold || entry.getValue().dead) {
                  endCombatSession(entry.getKey());
              }
          }
@@ -49,7 +49,6 @@ public class EventParser {
 
     public void endCombatSession(UUID uuid) {
         BetterKillfeedClient.LOGGER.info("Ending combat session for player: {}", uuid);
-
         combatSessions.remove(uuid);
     }
 }
