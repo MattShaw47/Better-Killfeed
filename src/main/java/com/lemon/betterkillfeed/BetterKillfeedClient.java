@@ -1,8 +1,10 @@
 package com.lemon.betterkillfeed;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,6 +15,11 @@ public class BetterKillfeedClient implements ClientModInitializer {
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 
     private static final EventParser EVENT_PARSER = new EventParser();
+
+    // Milliseconds between each assumed server tick. Decides how often onServerTick will run.
+    private static final long SERVER_TICK_INTERVAL = 1000L;
+
+    private long accumMs = 0;
 
     /// TODO:
     /// Track players alive / dead
@@ -30,15 +37,18 @@ public class BetterKillfeedClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         LOGGER.info("initializing " + MOD_ID);
+
+        ClientTickEvents.END_CLIENT_TICK.register(this::onServerTick);
     }
 
-    /// Processes which should run every server tick (20 times per second)
+    /// Processes which should run continuously
     private void onServerTick(MinecraftClient client) {
-        if (client.world == null) return;
+        long now = Util.getMeasuringTimeMs();
 
+        if (now - accumMs >= SERVER_TICK_INTERVAL) {
+            accumMs = now;
 
-        for (PlayerEntity player : client.world.getPlayers()) {
-
+            EVENT_PARSER.checkForExpiredSessions(10000L);
         }
     }
 

@@ -6,13 +6,12 @@ import java.util.UUID;
 public class DamageEvent implements CombatEvent {
     private final UUID victimUuid;
     private final float damageAmount;
-    private final Optional<UUID> attackerUuid;
+    private UUID attackerUuid;
     private final long timestamp;
 
-    public DamageEvent(UUID victimUuid, float damageAmount, UUID attackerUuid, long timestamp) {
+    public DamageEvent(UUID victimUuid, float damageAmount, long timestamp) {
         this.victimUuid = victimUuid;
         this.damageAmount = damageAmount;
-        this.attackerUuid = Optional.ofNullable(attackerUuid);
         this.timestamp = timestamp;
     }
 
@@ -30,7 +29,11 @@ public class DamageEvent implements CombatEvent {
         return damageAmount;
     }
 
-    public Optional<UUID> getAttackerUuid() {
+    public UUID getAttackerUuid() {
         return attackerUuid;
+    }
+
+    public void setAttackerUuid(UUID attackerUuid) {
+        this.attackerUuid = attackerUuid;
     }
 }

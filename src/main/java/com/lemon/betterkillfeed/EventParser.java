@@ -1,5 +1,6 @@
 package com.lemon.betterkillfeed;
 
+import net.minecraft.util.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,11 +21,25 @@ public class EventParser {
     public void parseEvent(CombatEvent event) {
         BetterKillfeedClient.LOGGER.info("Parsing event: {}", event);
 
-        if (combatSessions.containsKey(event.getVictim())) {
+        if (combatSessions.containsKey(event.getVictim()) && !combatSessions.get(event.getVictim()).dead) {
             combatSessions.get(event.getVictim()).addCombatEvent(event);
         }
         else {
             combatSessions.put(event.getVictim(), new CombatSession(event));
         }
+    }
+
+    public void checkForExpiredSessions(long expireThreshold) {
+         for (Map.Entry<UUID, CombatSession> entry : combatSessions.entrySet()) {
+             if (Util.getMeasuringTimeMs() - entry.getValue().lastCombatTime >= expireThreshold) {
+                 endCombatSession(entry.getKey());
+             }
+         }
+    }
+
+    public void endCombatSession(UUID uuid) {
+        BetterKillfeedClient.LOGGER.info("Ending combat session for player: {}", uuid);
+
+        combatSessions.remove(uuid);
     }
 }
