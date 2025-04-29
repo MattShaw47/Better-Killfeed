@@ -1,18 +1,18 @@
 {
 	"schemaVersion": 1,
-	"id": "tutorial-mod",
-	"version": "${version}",
+	"id": "better-killfeed",
+	"version": "0.5.0",
 	"name": "Better Killfeed",
 	"description": "Overhauls the default minecraft killfeed to be much more descriptive and useful.",
 	"authors": [
 		"YellowLemqn"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/MattShaw47/Better-Killfeed",
+		"sources": "https://github.com/MattShaw47/Better-Killfeed"
 	},
-	"license": "CC0-1.0",
-	"icon": "assets/tutorial-mod/icon.png",
+	"license": "MIT",
+	"icon": "assets/better-killfeed/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
@@ -26,7 +26,7 @@
 		]
 	},
 	"mixins": [
-		"tutorial-mod.mixins.json"
+		"better-killfeed.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.16.13",
