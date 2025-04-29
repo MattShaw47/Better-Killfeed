@@ -6,10 +6,7 @@ import net.minecraft.util.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /// Parses game events and keeps the list of CombatSessions up to date.
 /// Triggers KillMessageFormatter upon a player death.
@@ -27,7 +24,7 @@ public class EventParser {
     }
 
     public void parseEvent(CombatEvent event) {
-        BetterKillfeedClient.LOGGER.info("Parsing event: {}", event);
+        BetterKillfeedClient.LOGGER.info("Parsing event: {} for {}", event, event.getVictim());
 
         if (combatSessions.containsKey(event.getVictim()) && !combatSessions.get(event.getVictim()).dead) {
             combatSessions.get(event.getVictim()).addCombatEvent(event);
@@ -38,17 +35,25 @@ public class EventParser {
     }
 
     public void checkForExpiredSessions(long expireThreshold) {
-         for (Map.Entry<UUID, CombatSession> entry : combatSessions.entrySet()) {
-             if (Util.getMeasuringTimeMs() - entry.getValue().lastCombatTime >= expireThreshold || entry.getValue().dead) {
-                 endCombatSession(entry.getKey());
-             }
-         }
+        Iterator<Map.Entry<UUID, CombatSession>> sessionIterator = combatSessions.entrySet().iterator();
+        while (sessionIterator.hasNext()) {
+            Map.Entry<UUID, CombatSession> entry = sessionIterator.next();
+            CombatSession session = entry.getValue();
 
-         for (Map.Entry<UUID, Long> entry : pendingDeaths.entrySet()) {
-             if (Util.getMeasuringTimeMs() - entry.getValue() > DEATH_TIMEOUT_MS) {
-                 KillMessageFormatter.formatKillMessage(entry.getKey(), this);
-             }
-         }
+            if (Util.getMeasuringTimeMs() - session.lastCombatTime >= expireThreshold || session.dead) {
+                sessionIterator.remove(); // SAFE removal
+                // Optionally: perform any on-session-end logic here
+            }
+        }
+
+        Iterator<Map.Entry<UUID, Long>> deathIterator = pendingDeaths.entrySet().iterator();
+        while (deathIterator.hasNext()) {
+            Map.Entry<UUID, Long> entry = deathIterator.next();
+            if (Util.getMeasuringTimeMs() - entry.getValue() > DEATH_TIMEOUT_MS) {
+                KillMessageFormatter.formatKillMessage(entry.getKey(), this);
+                deathIterator.remove(); // SAFE removal
+            }
+        }
     }
 
     public CombatSession getCombatSession(UUID victim) {
