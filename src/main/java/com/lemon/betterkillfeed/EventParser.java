@@ -14,10 +14,6 @@ import java.util.UUID;
 /// Parses game events and keeps the list of CombatSessions up to date.
 /// Triggers KillMessageFormatter upon a player death.
 public class EventParser {
-    private static final long DEATH_TIMEOUT_MS = 250;
-
-    private final Map<UUID, Long> pendingDeaths = new HashMap<>();
-
     private final Map<UUID, Float> lastKnownHealth = new HashMap<UUID, Float>();
 
     private final Map<UUID, CombatSession> combatSessions;
@@ -41,12 +37,6 @@ public class EventParser {
          for (Map.Entry<UUID, CombatSession> entry : combatSessions.entrySet()) {
              if (Util.getMeasuringTimeMs() - entry.getValue().lastCombatTime >= expireThreshold || entry.getValue().dead) {
                  endCombatSession(entry.getKey());
-             }
-         }
-
-         for (Map.Entry<UUID, Long> entry : pendingDeaths.entrySet()) {
-             if (Util.getMeasuringTimeMs() - entry.getValue() > DEATH_TIMEOUT_MS) {
-                 KillMessageFormatter.formatKillMessage(entry.getKey(), this);
              }
          }
     }
@@ -87,14 +77,6 @@ public class EventParser {
 
             lastKnownHealth.put(uuid, currentHealth);
         }
-    }
-
-    public void onPlayerDeathDetected(PlayerEntity victim) {
-        pendingDeaths.put(victim.getUuid(), Util.getMeasuringTimeMs());
-    }
-
-    public void onDeathMessageIntecepted(UUID victimUuid) {
-        pendingDeaths.remove(victimUuid);
     }
 
     private void endCombatSession(UUID uuid) {
