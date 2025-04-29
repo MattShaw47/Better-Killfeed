@@ -3,13 +3,11 @@ package com.lemon.betterkillfeed;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.item.ItemStack;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableTextContent;
 import net.minecraft.util.Formatting;
-import org.spongepowered.asm.mixin.Mutable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,12 +18,14 @@ import java.util.UUID;
 public class KillMessageFormatter {
     public static Text formatKillMessage(Text message, EventParser parser) {
         BetterKillfeed.LOGGER.info("Starting formatting");
-        List<String> playerNames = extractPlayerNames(message);
-        BetterKillfeed.LOGGER.info("Found players: {}, size: {}",playerNames.getFirst(), playerNames.size());
+
+        // Index 0 = death key. Index 1 = victim. Index 2 = killer, if applicable
+        List<String> deathDetails = extractDeathCauses(message);
+        BetterKillfeed.LOGGER.info("Found players: {}, size: {}",deathDetails.getFirst(), deathDetails.size());
 
         List<UUID> playerUuids = new ArrayList<>();
 
-        for (String name : playerNames) {
+        for (String name : deathDetails) {
             getUuidByName(name).ifPresent(playerUuids::add);
         }
 
@@ -37,11 +37,36 @@ public class KillMessageFormatter {
 
         String killer;
 
-        if (playerNames.size() > 1) {
-            killer = playerNames.getLast();
+        String deathKey = deathDetails.getFirst();
+
+        if (deathDetails.size() == 3) {
+            if (deathKey.contains("explosion")) {
+                killer = deathDetails.getLast() + " using explosives";
+            }
+            else {
+                killer = deathDetails.getLast();
+            }
+        }
+        else if (deathKey.startsWith("death.fell")) {
+            killer = "falling";
+        }
+        else if (deathKey.startsWith("death.attack.lava")) {
+            killer = "lava";
+        }
+        else if (deathKey.startsWith("death.attack.onFire") || deathKey.startsWith("death.attack.inFire")) {
+            killer = "fire";
+        }
+        else if (deathKey.startsWith("death.attack.explosion")) {
+            killer = "explosion";
+        }
+        else if (deathKey.startsWith("death.attack.outOfWorld")) {
+            killer = "void";
+        }
+        else if (deathKey.startsWith("death.attack.inWall")) {
+            killer = "suffocation";
         }
         else {
-            killer = "the environment";
+            killer = "environment";
         }
 
         if (itemHoverText.isPresent()) {
@@ -55,7 +80,7 @@ public class KillMessageFormatter {
         MutableText prefix = Text.literal("[DEATH] ")
                 .styled(style -> style.withColor(Formatting.DARK_RED));
 
-        MutableText victimText = Text.literal(playerNames.getFirst())
+        MutableText victimText = Text.literal(deathDetails.get(1))
                 .styled(style -> style.withColor(Formatting.GOLD));
 
         MutableText diedToText = Text.literal(" died to ")
@@ -111,22 +136,24 @@ public class KillMessageFormatter {
         return Optional.empty();
     }
 
-    private static List<String> extractPlayerNames(Text text) {
-        List<String> names = new ArrayList<>();
+    private static List<String> extractDeathCauses(Text text) {
+        List<String> causes = new ArrayList<>();
 
         if (text.getContent() instanceof TranslatableTextContent translatable) {
+            causes.add(translatable.getKey());
+
             for (Object arg : translatable.getArgs()) {
                 if (arg instanceof Text argText) {
-                    names.add(argText.getString());
+                    causes.add(argText.getString());
                 } else if (arg instanceof String str) {
-                    names.add(str);
+                    causes.add(str);
                 } else {
                     // Fallback
-                    names.add(arg.toString());
+                    causes.add(arg.toString());
                 }
             }
         }
-        return names;
+        return causes;
     }
 
     private static Optional<Text> extractItemHoverText(Text deathMessage) {
