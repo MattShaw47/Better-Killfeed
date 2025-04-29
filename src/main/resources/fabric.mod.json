@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "better-killfeed",
-	"version": "0.5.0",
+	"version": "0.5.1",
 	"name": "Better Killfeed",
 	"description": "Overhauls the default minecraft killfeed to be much more descriptive and useful.",
 	"authors": [

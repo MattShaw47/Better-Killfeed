@@ -6,10 +6,7 @@ import net.minecraft.util.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /// Parses game events and keeps the list of CombatSessions up to date.
 /// Triggers KillMessageFormatter upon a player death.
@@ -23,7 +20,7 @@ public class EventParser {
     }
 
     public void parseEvent(CombatEvent event) {
-        BetterKillfeedClient.LOGGER.info("Parsing event: {}", event);
+        BetterKillfeedClient.LOGGER.info("Parsing event: {} for {}", event, event.getVictim());
 
         if (combatSessions.containsKey(event.getVictim()) && !combatSessions.get(event.getVictim()).dead) {
             combatSessions.get(event.getVictim()).addCombatEvent(event);
