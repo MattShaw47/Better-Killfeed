@@ -11,10 +11,6 @@ import java.util.*;
 /// Parses game events and keeps the list of CombatSessions up to date.
 /// Triggers KillMessageFormatter upon a player death.
 public class EventParser {
-    private static final long DEATH_TIMEOUT_MS = 250;
-
-    private final Map<UUID, Long> pendingDeaths = new HashMap<>();
-
     private final Map<UUID, Float> lastKnownHealth = new HashMap<UUID, Float>();
 
     private final Map<UUID, CombatSession> combatSessions;
@@ -35,25 +31,11 @@ public class EventParser {
     }
 
     public void checkForExpiredSessions(long expireThreshold) {
-        Iterator<Map.Entry<UUID, CombatSession>> sessionIterator = combatSessions.entrySet().iterator();
-        while (sessionIterator.hasNext()) {
-            Map.Entry<UUID, CombatSession> entry = sessionIterator.next();
-            CombatSession session = entry.getValue();
-
-            if (Util.getMeasuringTimeMs() - session.lastCombatTime >= expireThreshold || session.dead) {
-                sessionIterator.remove(); // SAFE removal
-                // Optionally: perform any on-session-end logic here
-            }
-        }
-
-        Iterator<Map.Entry<UUID, Long>> deathIterator = pendingDeaths.entrySet().iterator();
-        while (deathIterator.hasNext()) {
-            Map.Entry<UUID, Long> entry = deathIterator.next();
-            if (Util.getMeasuringTimeMs() - entry.getValue() > DEATH_TIMEOUT_MS) {
-                KillMessageFormatter.formatKillMessage(entry.getKey(), this);
-                deathIterator.remove(); // SAFE removal
-            }
-        }
+         for (Map.Entry<UUID, CombatSession> entry : combatSessions.entrySet()) {
+             if (Util.getMeasuringTimeMs() - entry.getValue().lastCombatTime >= expireThreshold || entry.getValue().dead) {
+                 endCombatSession(entry.getKey());
+             }
+         }
     }
 
     public CombatSession getCombatSession(UUID victim) {
@@ -92,14 +74,6 @@ public class EventParser {
 
             lastKnownHealth.put(uuid, currentHealth);
         }
-    }
-
-    public void onPlayerDeathDetected(PlayerEntity victim) {
-        pendingDeaths.put(victim.getUuid(), Util.getMeasuringTimeMs());
-    }
-
-    public void onDeathMessageIntecepted(UUID victimUuid) {
-        pendingDeaths.remove(victimUuid);
     }
 
     private void endCombatSession(UUID uuid) {
