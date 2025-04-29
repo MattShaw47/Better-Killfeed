@@ -9,9 +9,10 @@ public class DamageEvent implements CombatEvent {
     private UUID attackerUuid;
     private final long timestamp;
 
-    public DamageEvent(UUID victimUuid, float damageAmount, long timestamp) {
+    public DamageEvent(UUID victimUuid, float damageAmount, UUID attackerUuid, long timestamp) {
         this.victimUuid = victimUuid;
         this.damageAmount = damageAmount;
+        this.attackerUuid = attackerUuid;
         this.timestamp = timestamp;
     }
 

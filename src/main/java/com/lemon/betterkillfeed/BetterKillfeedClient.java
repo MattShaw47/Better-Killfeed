@@ -75,6 +75,7 @@ public class BetterKillfeedClient implements ClientModInitializer {
             accumMs = now;
 
             EVENT_PARSER.checkForExpiredSessions(10000L);
+            EVENT_PARSER.onTick();
         }
     }
 

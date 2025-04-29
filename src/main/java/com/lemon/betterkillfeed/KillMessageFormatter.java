@@ -10,10 +10,7 @@ import net.minecraft.text.TranslatableTextContent;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Util;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /// Creates kill messages.
 public class KillMessageFormatter {
@@ -28,7 +25,8 @@ public class KillMessageFormatter {
         for (String name : deathDetails) {
             getUuidByName(name).ifPresent(playerUuids::add);
         }
-        
+
+
         parser.parseEvent(new KillEvent(playerUuids.getFirst(), Util.getMeasuringTimeMs()));
 
         CombatSession session = parser.getCombatSession(playerUuids.getFirst());
@@ -37,6 +35,93 @@ public class KillMessageFormatter {
 
         MutableText usingText;
 
+        String killer = getKiller(deathDetails);
+
+        Map<String, Float> assistData = new HashMap<>();
+
+        for (UUID uuid : session.getDamageContributions().keySet()) {
+            assistData.put(getNameByUuid(uuid), session.getDamageContributions().get(uuid) / session.getTotalDamage());
+        }
+
+        MutableText hoverText = Text.literal("");
+
+        if (assistData.isEmpty()) {
+            hoverText.append(
+                    Text.literal("Environment: 100.0%")
+            );
+        }
+
+        // build the assist hover tooltip
+        for (Map.Entry<String, Float> entry : assistData.entrySet()) {
+            String name = entry.getKey();
+            float percentage = entry.getValue() * 100.0f;
+
+            String formattedPercent = String.format("%.1f", percentage);
+
+            if (name.equals(killer) || name.equals("Environment") && killer.equals("falling")) {
+                hoverText.append(
+                        Text.literal(name + ": " + formattedPercent + "%\n")
+                                .styled(style -> style.withColor(Formatting.GOLD))
+                );
+            }
+            else {
+                hoverText.append(
+                        Text.literal(name + ": " + formattedPercent + "%\n")
+                                .styled(style -> style.withColor(Formatting.GRAY))
+                );
+            }
+        }
+
+        if (itemHoverText.isPresent()) {
+            usingText = Text.literal(" using ")
+                    .append(itemHoverText.get());
+        }
+        else {
+            usingText = Text.literal("");
+        }
+
+        MutableText prefix = Text.literal("[DEATH] ")
+                .styled(style -> style.withColor(Formatting.DARK_RED));
+
+        MutableText victimText = Text.literal(deathDetails.get(1))
+                .styled(style -> style.withColor(Formatting.GOLD));
+
+        MutableText diedToText = Text.literal(" died to ")
+                .styled(style -> style.withColor(Formatting.GRAY));
+
+        MutableText sourceText = Text.literal(killer)
+                .styled(style -> style.withColor(Formatting.GOLD));
+
+        MutableText poppedTextFirst = Text.literal(", and popped ")
+                .styled(style -> style.withColor(Formatting.GRAY));
+
+        MutableText poppedNumber = Text.literal(String.valueOf(session.totemPops))
+                .styled(style -> style.withColor(Formatting.GOLD));
+
+        MutableText poppedTextLast = Text.literal(" totems.")
+                .styled(style -> style.withColor(Formatting.GRAY));
+
+        HoverEvent hoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT, hoverText);
+
+        MutableText assistsText = Text.literal(" [Assists]")
+                .styled(style -> style
+                        .withColor(Formatting.DARK_PURPLE)
+                        .withHoverEvent(hoverEvent)
+                );
+
+
+        return prefix
+                .append(victimText)
+                .append(diedToText)
+                .append(sourceText)
+                .append(usingText)
+                .append(poppedTextFirst)
+                .append(poppedNumber)
+                .append(poppedTextLast)
+                .append(assistsText);
+    }
+
+    private static String getKiller(List<String> deathDetails) {
         String killer;
 
         String deathKey = deathDetails.getFirst();
@@ -70,58 +155,7 @@ public class KillMessageFormatter {
         else {
             killer = "environment";
         }
-
-        if (itemHoverText.isPresent()) {
-            usingText = Text.literal(" using ")
-                    .append(itemHoverText.get());
-        }
-        else {
-            usingText = Text.literal("");
-        }
-
-        MutableText prefix = Text.literal("[DEATH] ")
-                .styled(style -> style.withColor(Formatting.DARK_RED));
-
-        MutableText victimText = Text.literal(deathDetails.get(1))
-                .styled(style -> style.withColor(Formatting.GOLD));
-
-        MutableText diedToText = Text.literal(" died to ")
-                .styled(style -> style.withColor(Formatting.GRAY));
-
-        MutableText sourceText = Text.literal(killer)
-                .styled(style -> style.withColor(Formatting.GOLD));
-
-        MutableText poppedTextFirst = Text.literal(", and popped ")
-                .styled(style -> style.withColor(Formatting.GRAY));
-
-        MutableText poppedNumber = Text.literal(String.valueOf(session.totemPops))
-                .styled(style -> style.withColor(Formatting.GOLD));
-
-        MutableText poppedTextLast = Text.literal(" totems.")
-                .styled(style -> style.withColor(Formatting.GRAY));
-
-        HoverEvent hoverEvent = new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                Text.literal("TEMP")
-        );
-
-        MutableText assistsText = Text.literal(" [Assists]")
-                .styled(style -> style
-                        .withColor(Formatting.DARK_PURPLE)
-                        .withHoverEvent(hoverEvent)
-                );
-
-        Text killMessage = prefix
-                .append(victimText)
-                .append(diedToText)
-                .append(sourceText)
-                .append(usingText)
-                .append(poppedTextFirst)
-                .append(poppedNumber)
-                .append(poppedTextLast)
-                .append(assistsText);
-
-
-        return killMessage;
+        return killer;
     }
 
     private static Optional<UUID> getUuidByName(String name) {
@@ -136,6 +170,18 @@ public class KillMessageFormatter {
         }
 
         return Optional.empty();
+    }
+
+    private static String getNameByUuid(UUID uuid) {
+        ClientPlayNetworkHandler handler = MinecraftClient.getInstance().getNetworkHandler();
+
+        for (PlayerListEntry entry : handler.getPlayerList()) {
+            if (entry.getProfile().getId().equals(uuid)) {
+                return entry.getProfile().getName();
+            }
+        }
+
+        return "Environment";
     }
 
     private static List<String> extractDeathCauses(Text text) {

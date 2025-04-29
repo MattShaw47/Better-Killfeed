@@ -1,18 +1,23 @@
 package com.lemon.betterkillfeed;
 
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /// Parses game events and keeps the list of CombatSessions up to date.
 /// Triggers KillMessageFormatter upon a player death.
 public class EventParser {
 
-    private Map<UUID, CombatSession> combatSessions;
+    private final Map<UUID, Float> lastKnownHealth = new HashMap<UUID, Float>();
+
+    private final Map<UUID, CombatSession> combatSessions;
 
     public EventParser() {
         combatSessions = new HashMap<UUID, CombatSession>();
@@ -44,6 +49,33 @@ public class EventParser {
         else {
             // Returns a combat session with a kill event using a 0 uuid.
             return new CombatSession(new KillEvent(new UUID(0, 0), Util.getMeasuringTimeMs()));
+        }
+    }
+
+    public void onTick() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null) return;
+
+        for (PlayerEntity player : client.world.getPlayers()) {
+            UUID uuid = player.getUuid();
+            float currentHealth = player.getHealth();
+
+            if (lastKnownHealth.containsKey(uuid)) {
+                float oldHealth = lastKnownHealth.get(uuid);
+
+                if (currentHealth < oldHealth) {
+                    float damageAmount = oldHealth - currentHealth;
+
+                    UUID guessedAttacker = AttackerGuesser.guessAttacker(player);
+
+                    BetterKillfeedClient.LOGGER.info("Detected damage. Victim: {}, Damage: {}, Attacker Guess: {}",
+                            player.getName().getString(),damageAmount,guessedAttacker.toString());
+
+                    parseEvent(new DamageEvent(player.getUuid(), damageAmount, guessedAttacker, Util.getMeasuringTimeMs()));
+                }
+            }
+
+            lastKnownHealth.put(uuid, currentHealth);
         }
     }
 
