@@ -58,6 +58,8 @@ public class BetterKillfeedClient implements ClientModInitializer {
                 Text newKillMessage = KillMessageFormatter.formatKillMessage(message, EVENT_PARSER);
 
                 MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(newKillMessage);
+
+                EVENT_PARSER.checkForExpiredSessions(10000L);
             }
         });
 

@@ -8,6 +8,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableTextContent;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,6 @@ import java.util.UUID;
 /// Creates kill messages.
 public class KillMessageFormatter {
     public static Text formatKillMessage(Text message, EventParser parser) {
-        BetterKillfeed.LOGGER.info("Starting formatting");
 
         // Index 0 = death key. Index 1 = victim. Index 2 = killer, if applicable
         List<String> deathDetails = extractDeathCauses(message);
@@ -28,6 +28,8 @@ public class KillMessageFormatter {
         for (String name : deathDetails) {
             getUuidByName(name).ifPresent(playerUuids::add);
         }
+        
+        parser.parseEvent(new KillEvent(playerUuids.getFirst(), Util.getMeasuringTimeMs()));
 
         CombatSession session = parser.getCombatSession(playerUuids.getFirst());
 

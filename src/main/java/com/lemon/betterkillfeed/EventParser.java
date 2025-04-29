@@ -47,7 +47,7 @@ public class EventParser {
         }
     }
 
-    public void endCombatSession(UUID uuid) {
+    private void endCombatSession(UUID uuid) {
         BetterKillfeedClient.LOGGER.info("Ending combat session for player: {}", uuid);
         combatSessions.remove(uuid);
     }

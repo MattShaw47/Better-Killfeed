@@ -3,7 +3,6 @@
   "package": "com.lemon.betterkillfeed.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "ExampleMixin"
   ],
   "injectors": {
     "defaultRequire": 1
