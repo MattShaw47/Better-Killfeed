@@ -11,11 +11,13 @@ public class CombatSession {
     public long lastCombatTime;
     public boolean dead;
     private float totalDamage;
+    private UUID mostRecentAttacker;
 
     public CombatSession(CombatEvent firstEvent) {
         BetterKillfeedClient.LOGGER.info("Combat session started for player: {}", firstEvent.getVictim());
         damageContributions = new HashMap<UUID, Float>();
         totemPops = 0;
+        mostRecentAttacker = new UUID(0, 0);
         addCombatEvent(firstEvent);
     }
 
@@ -29,6 +31,7 @@ public class CombatSession {
             }
 
             totalDamage += damageEvent.getDamageAmount();
+            mostRecentAttacker = damageEvent.getAttackerUuid();
         }
         else if (combatEvent instanceof KillEvent killEvent) {
             dead = true;
@@ -46,5 +49,9 @@ public class CombatSession {
 
     public float getTotalDamage() {
         return totalDamage;
+    }
+
+    public UUID getMostRecentAttacker() {
+        return mostRecentAttacker;
     }
 }

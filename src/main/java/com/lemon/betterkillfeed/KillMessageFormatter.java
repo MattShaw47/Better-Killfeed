@@ -80,10 +80,28 @@ public class KillMessageFormatter {
             usingText = Text.literal("");
         }
 
+        return buildMessage(usingText, deathDetails.get(1), killer, hoverText, session.totemPops);
+    }
+
+    public static void formatKillMessage(UUID victimUuid, EventParser parser) {
+        CombatSession session = parser.getCombatSession(victimUuid);
+
+        UUID killerUuid = session.getMostRecentAttacker();
+
+        String victimName = getNameByUuid(victimUuid);
+        String killerName = getNameByUuid(killerUuid);
+
+        MutableText empty = Text.literal("");
+
+        MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(buildMessage(empty, victimName, killerName, empty, session.totemPops));
+    }
+
+    private static Text buildMessage(Text usingText, String victim, String killer, MutableText hoverText, int totemPops) {
+
         MutableText prefix = Text.literal("[DEATH] ")
                 .styled(style -> style.withColor(Formatting.DARK_RED));
 
-        MutableText victimText = Text.literal(deathDetails.get(1))
+        MutableText victimText = Text.literal(victim)
                 .styled(style -> style.withColor(Formatting.GOLD));
 
         MutableText diedToText = Text.literal(" died to ")
@@ -95,7 +113,7 @@ public class KillMessageFormatter {
         MutableText poppedTextFirst = Text.literal(", popping ")
                 .styled(style -> style.withColor(Formatting.GRAY));
 
-        MutableText poppedNumber = Text.literal(String.valueOf(session.totemPops))
+        MutableText poppedNumber = Text.literal(String.valueOf(totemPops))
                 .styled(style -> style.withColor(Formatting.GOLD));
 
         MutableText poppedTextLast = Text.literal(" totems.")
@@ -217,5 +235,4 @@ public class KillMessageFormatter {
         }
         return Optional.empty();
     }
-
 }
