@@ -92,7 +92,7 @@ public class KillMessageFormatter {
         MutableText sourceText = Text.literal(killer)
                 .styled(style -> style.withColor(Formatting.GOLD));
 
-        MutableText poppedTextFirst = Text.literal(", and popped ")
+        MutableText poppedTextFirst = Text.literal(", popping ")
                 .styled(style -> style.withColor(Formatting.GRAY));
 
         MutableText poppedNumber = Text.literal(String.valueOf(session.totemPops))

@@ -7,7 +7,7 @@ import java.util.UUID;
 /// A combat session for a single player.
 public class CombatSession {
     public int totemPops;
-    private Map<UUID, Float> damageContributions;
+    private final Map<UUID, Float> damageContributions;
     public long lastCombatTime;
     public boolean dead;
     private float totalDamage;

@@ -53,8 +53,6 @@ public class BetterKillfeedClient implements ClientModInitializer {
             if (message.getContent() instanceof TranslatableTextContent translatable
                     && translatable.getKey().startsWith("death.")) {
 
-                LOGGER.info("CAUGHT DEATH MSG KEY: {}, NORMAL: {}", translatable.getKey(), message.getContent());
-
                 Text newKillMessage = KillMessageFormatter.formatKillMessage(message, EVENT_PARSER);
 
                 MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(newKillMessage);
