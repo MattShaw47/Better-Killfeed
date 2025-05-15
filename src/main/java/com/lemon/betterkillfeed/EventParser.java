@@ -6,6 +6,11 @@ import net.minecraft.util.Util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.*;
 
 /// Parses game events and keeps the list of CombatSessions up to date.
@@ -16,7 +21,7 @@ public class EventParser {
     private final Map<UUID, CombatSession> combatSessions;
 
     public EventParser() {
-        combatSessions = new HashMap<UUID, CombatSession>();
+        combatSessions = new ConcurrentHashMap<>();
     }
 
     public void parseEvent(CombatEvent event) {
@@ -65,6 +70,10 @@ public class EventParser {
 
                     UUID guessedAttacker = AttackerGuesser.guessAttacker(player);
 
+                    if (guessedAttacker.equals(AttackerGuesser.ENVIRONMENT_UUID)) {
+                        guessedAttacker = getLastAttackerOrDefault(player.getUuid());
+                    }
+
                     BetterKillfeedClient.LOGGER.info("Detected damage. Victim: {}, Damage: {}, Attacker Guess: {}",
                             player.getName().getString(),damageAmount,guessedAttacker.toString());
 
@@ -79,5 +88,15 @@ public class EventParser {
     private void endCombatSession(UUID uuid) {
         BetterKillfeedClient.LOGGER.info("Ending combat session for player: {}", uuid);
         combatSessions.remove(uuid);
+    }
+
+    private UUID getLastAttackerOrDefault(UUID victim) {
+        CombatSession session = combatSessions.get(victim);
+
+        if (session != null && session.getMostRecentAttacker() != null) {
+            return session.getMostRecentAttacker();
+        }
+
+        return AttackerGuesser.ENVIRONMENT_UUID;
     }
 }
