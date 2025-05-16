@@ -26,7 +26,7 @@ public class BetterKillfeedClient implements ClientModInitializer {
     private static final EventParser EVENT_PARSER = new EventParser();
 
     // Milliseconds between each assumed server tick. Decides how often onServerTick will run.
-    private static final long SERVER_TICK_INTERVAL = 500L;
+    private static final long SERVER_TICK_INTERVAL = 50L;
 
     private long accumMs = 0;
 
